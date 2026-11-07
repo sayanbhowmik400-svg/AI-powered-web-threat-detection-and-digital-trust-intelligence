@@ -1,11 +1,14 @@
 import os
 import json
-from google import genai
+import google.generativeai as genai
 from dotenv import load_dotenv
 
 load_dotenv()
 
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY", ""))
+# Configure API Key
+api_key = os.getenv("GEMINI_API_KEY", "")
+if api_key:
+    genai.configure(api_key=api_key)
 
 def generate_threat_explanation(hostname: str, tls_info: dict, domain_info: dict, content_info: dict, base_score: int) -> dict:
     prompt = f"""
@@ -26,10 +29,8 @@ def generate_threat_explanation(hostname: str, tls_info: dict, domain_info: dict
     }}
     """
     try:
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=prompt,
-        )
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        response = model.generate_content(prompt)
         clean_text = response.text.strip().removeprefix("```json").removesuffix("```").strip()
         return json.loads(clean_text)
     except Exception as e:

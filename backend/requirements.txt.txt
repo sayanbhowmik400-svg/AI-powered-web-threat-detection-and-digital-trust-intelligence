@@ -1,2 +1,9 @@
-google-genai==0.1.1
+fastapi==0.115.0
+uvicorn==0.30.6
+pydantic==2.8.2
+python-whois==0.9.4
+cryptography==43.0.1
+requests==2.32.3
+beautifulsoup4==4.12.3
+google-generativeai>=0.8.0
 python-dotenv==1.0.1
