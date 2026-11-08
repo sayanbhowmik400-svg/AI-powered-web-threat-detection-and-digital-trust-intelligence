@@ -375,29 +375,29 @@
           const resData = await response.json();
           updateView({
             hostname: resData.hostname,
-            score: resData.score,
-            status: resData.status,
-            title: resData.content?.title || "Unknown",
+            score: resData.score ?? resData.threat_score ?? 0,
+            status: (resData.status ?? resData.verdict ?? "SAFE").toUpperCase(),
+            title: resData.page_title || "Unknown",
             tls: {
-              valid: resData.tls?.valid,
-              issuer: resData.tls?.issuer || "Unknown",
-              remaining: (resData.tls?.days_remaining ?? 0) + " days"
+              valid: resData.tls?.valid ?? resData.tls_valid ?? false,
+              issuer: resData.tls?.issuer ?? resData.tls_issuer ?? "Unknown",
+              remaining: resData.tls?.remaining ?? resData.tls_remaining ?? "Unknown"
             },
             domain: {
-              registrar: resData.domain?.registrar || "Privacy Redacted",
-              age: (resData.domain?.age_days ?? "Unknown") + " days",
-              is_new: Boolean(resData.domain?.is_new),
-              flag: resData.domain?.is_new ? "Recently Created (<30d)" : "Established Domain"
+              registrar: resData.domain?.registrar ?? resData.registrar ?? "Privacy Redacted",
+              age: resData.domain?.age ?? resData.domain_age ?? "Unknown",
+              is_new: Boolean(resData.domain?.is_fresh ?? resData.telemetry?.is_fresh),
+              flag: resData.domain?.flag ?? (resData.domain?.is_fresh ? "Recently Created (<30d)" : "Established Domain")
             },
             web3: {
-              ledger: resData.web3?.network || "Polygon Amoy Testnet (Chain ID 80002)",
-              hash: (resData.web3?.domain_hash ? resData.web3.domain_hash.slice(0, 16) + "..." : "0x129d5f8a8a42..."),
+              ledger: resData.web3?.ledger ?? "Polygon Amoy Testnet (Chain ID 80002)",
+              hash: (resData.web3?.hash || resData.web3?.short_hash || "0x129d5f8a8a42..."),
               status: "Cryptographically Anchored"
             },
             ai: {
-              summary: resData.ai_report?.verdict_summary || "Automated scan completed.",
-              flags: resData.ai_report?.key_flags || [],
-              action: resData.ai_report?.recommended_action || "Browse with normal discretion."
+              summary: resData.xai_summary ?? "Automated scan completed.",
+              flags: resData.identified_risk_indicators ?? resData.risk_indicators ?? [],
+              action: resData.recommended_action ?? "Browse with normal discretion."
             }
           });
         } else {
