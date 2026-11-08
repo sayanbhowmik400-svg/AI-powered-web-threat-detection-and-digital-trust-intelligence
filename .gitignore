@@ -1,17 +1,36 @@
-# Python
-backend/__pycache__/
+# Environment files (Never commit API keys or secrets)
+.env
+.env.*
+*.env
 backend/.env
+backend/.env.*
+frontend/.env
+frontend/.env*.local
+
+# Python artifacts
+backend/__pycache__/
+__pycache__/
+*.py[cod]
+*$py.class
 backend/venv/
+venv/
+ENV/
+.venv/
 
 # Node / Next.js
 frontend/node_modules/
+node_modules/
 frontend/.next/
-frontend/.env*.local
+.next/
+frontend/out/
+out/
+build/
+dist/
 
-# System files
+# OS / IDE files
 .DS_Store
 Thumbs.db
-backend/.env
-backend/.env
-backend/.env
-backend/.env
+.vscode/
+.idea/
+*.swp
+*.swo
