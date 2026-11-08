@@ -77,7 +77,7 @@ export default function PhishLensDashboard() {
 
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:8000/api/scan", {
+      const res = await fetch("https://phishlens-ym75.onrender.com/api/scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: scanTarget.trim() }),
