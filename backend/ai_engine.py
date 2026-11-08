@@ -42,3 +42,14 @@ def generate_threat_explanation(hostname: str, tls_info: dict, domain_info: dict
             ],
             "recommended_action": "Avoid entering credentials or sensitive personal information on this site."
         }
+        
+if __name__ == "__main__":
+    test_result = generate_threat_explanation(
+        hostname="paypal-fake-login.xyz",
+        tls_info={"valid": False, "issuer": "None", "days_remaining": 0},
+        domain_info={"age_days": 2, "is_new": True},
+        content_info={"has_password_field": True, "has_payment_keywords": True},
+        base_score=85
+    )
+    print(json.dumps(test_result, indent=2))        
+        
