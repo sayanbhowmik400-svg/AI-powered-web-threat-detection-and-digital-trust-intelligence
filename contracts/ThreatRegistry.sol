@@ -1,55 +1,63 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+/**
+ * @title PhishLens ThreatRegistry
+ * @notice Immutable decentralized log for anchoring AI-evaluated domain threat telemetry.
+ */
 contract ThreatRegistry {
     struct ThreatRecord {
-        bytes32 domainHash;
-        uint8 severityScore;
-        string ipfsCid;
-        address reporter;
+        string domain;
+        uint8 threatScore;
+        string verdict;
+        bytes32 telemetryHash;
         uint256 timestamp;
+        address reporter;
     }
 
-    mapping(bytes32 => ThreatRecord) public registry;
+    ThreatRecord[] public records;
+    mapping(string => ThreatRecord) public latestDomainRecord;
 
-    event ThreatLogged(
-        bytes32 indexed domainHash,
-        uint8 severityScore,
-        string ipfsCid,
-        address indexed reporter,
-        uint256 timestamp
+    event ThreatAnchored(
+        string indexed domain,
+        uint8 threatScore,
+        string verdict,
+        bytes32 telemetryHash,
+        uint256 timestamp,
+        address indexed reporter
     );
 
-    function reportThreat(
-        string memory domain,
-        uint8 severityScore,
-        string memory ipfsCid
+    function logThreat(
+        string calldata _domain,
+        uint8 _threatScore,
+        string calldata _verdict,
+        bytes32 _telemetryHash
     ) external {
-        bytes32 domainHash = keccak256(abi.encodePacked(domain));
-        
-        registry[domainHash] = ThreatRecord({
-            domainHash: domainHash,
-            severityScore: severityScore,
-            ipfsCid: ipfsCid,
-            reporter: msg.sender,
-            timestamp: block.timestamp
+        require(_threatScore <= 100, "Score must be 0-100");
+
+        ThreatRecord memory newRecord = ThreatRecord({
+            domain: _domain,
+            threatScore: _threatScore,
+            verdict: _verdict,
+            telemetryHash: _telemetryHash,
+            timestamp: block.timestamp,
+            reporter: msg.sender
         });
 
-        emit ThreatLogged(domainHash, severityScore, ipfsCid, msg.sender, block.timestamp);
+        records.push(newRecord);
+        latestDomainRecord[_domain] = newRecord;
+
+        emit ThreatAnchored(
+            _domain,
+            _threatScore,
+            _verdict,
+            _telemetryHash,
+            block.timestamp,
+            msg.sender
+        );
     }
 
-    function verifyDomain(string memory domain) external view returns (
-        bool exists,
-        uint8 score,
-        string memory ipfsCid,
-        address reporter,
-        uint256 timestamp
-    ) {
-        bytes32 domainHash = keccak256(abi.encodePacked(domain));
-        ThreatRecord memory rec = registry[domainHash];
-        if (rec.timestamp == 0) {
-            return (false, 0, "", address(0), 0);
-        }
-        return (true, rec.severityScore, rec.ipfsCid, rec.reporter, rec.timestamp);
+    function getTotalRecords() external view returns (uint256) {
+        return records.length;
     }
 }

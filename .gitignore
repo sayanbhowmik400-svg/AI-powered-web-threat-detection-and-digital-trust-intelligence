@@ -1,4 +1,4 @@
-# Environment files (Never commit API keys or secrets)
+# Environment Variables & Secrets (NEVER COMMIT)
 .env
 .env.*
 *.env
@@ -7,27 +7,27 @@ backend/.env.*
 frontend/.env
 frontend/.env*.local
 
-# Python artifacts
-backend/__pycache__/
+# Python Bytecode & Virtual Environments
 __pycache__/
+backend/__pycache__/
 *.py[cod]
 *$py.class
-backend/venv/
 venv/
-ENV/
+backend/venv/
 .venv/
+ENV/
 
-# Node / Next.js
-frontend/node_modules/
+# Node / Next.js Build Artifacts
 node_modules/
-frontend/.next/
+frontend/node_modules/
 .next/
-frontend/out/
+frontend/.next/
 out/
+frontend/out/
 build/
 dist/
 
-# OS / IDE files
+# OS & Editor Files
 .DS_Store
 Thumbs.db
 .vscode/
