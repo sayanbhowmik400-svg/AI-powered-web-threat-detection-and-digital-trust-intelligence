@@ -88,12 +88,10 @@ def scan_endpoint(payload: ScanRequest):
     parsed = urlparse(raw_url if "://" in raw_url else f"https://{raw_url}")
     hostname = (parsed.netloc or parsed.path).split(":")[0].lower()
 
-    # 1. Technical Telemetry
     tls_data = inspect_tls(hostname)
     domain_data = inspect_domain(hostname)
     content_data = inspect_dom(raw_url)
 
-    # 2. Heuristic Scoring
     score = 10
     if not tls_data["valid"]:
         score += 35
@@ -105,10 +103,7 @@ def scan_endpoint(payload: ScanRequest):
     score = min(score, 99)
     status = "SAFE" if score < 40 else "SUSPICIOUS" if score < 70 else "MALICIOUS"
 
-    # 3. AI Explanation
     ai_report = generate_threat_explanation(hostname, tls_data, domain_data, content_data, score)
-
-    # 4. Web3 Cryptographic Anchor Hash
     domain_hash = hashlib.sha256(hostname.encode()).hexdigest()
 
     return {

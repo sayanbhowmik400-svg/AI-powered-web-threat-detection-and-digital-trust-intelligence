@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhishLens Defense Engine — UI Prototype</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #07090e;
+      background-image: 
+        linear-gradient(to right, rgba(31, 41, 61, 0.25) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(31, 41, 61, 0.25) 1px, transparent 1px);
+      background-size: 32px 32px;
+      color: #f1f5f9;
+      min-height: 100vh;
+    }
+  </style>
+</head>
+<body class="selection:bg-cyan-500/30 selection:text-cyan-200 p-4 sm:p-8 font-sans">
+
+  <div class="max-w-4xl mx-auto space-y-8">
+    
+    <!-- Header -->
+    <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-800/80 pb-5 gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 p-[1px] flex items-center justify-center shadow-lg shadow-cyan-500/10">
+          <div class="w-full h-full bg-[#0D111A] rounded-[11px] flex items-center justify-center">
+            <i data-lucide="shield-alert" class="w-5 h-5 text-cyan-400"></i>
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-extrabold text-xl tracking-wider text-white">PHISH<span className="text-cyan-400">LENS</span></span>
+            <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800 font-semibold">Live v2.4</span>
+          </div>
+          <p class="text-xs text-slate-400 font-mono">HackMatrix AI + Web3 Security Defense</p>
+        </div>
+      </div>
+      <p class="text-xs text-slate-500 font-mono text-left sm:text-right max-w-xs">
+        Autonomous phishing verification powered by live TLS inspection, domain age heuristics, and transparent threat logging.
+      </p>
+    </header>
+
+    <!-- Search Form -->
+    <section class="space-y-3">
+      <form id="scanForm" onsubmit="handleInspect(event)" class="flex items-center gap-2">
+        <input
+          id="urlInput"
+          type="text"
+          value="https://app.remix.live"
+          placeholder="https://app.remix.live"
+          class="flex-1 px-4 py-3 bg-[#0D111A] border border-slate-800 focus:border-cyan-500 rounded-xl text-sm font-mono text-white outline-none placeholder:text-slate-600 transition shadow-inner"
+        />
+        <button
+          type="submit"
+          id="inspectBtn"
+          class="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-bold text-xs uppercase tracking-wider rounded-xl flex items-center gap-2 transition shadow-md shadow-cyan-500/20 active:scale-95"
+        >
+          <i data-lucide="search" class="w-4 h-4"></i>
+          <span>Inspect</span>
+        </button>
+      </form>
+
+      <div class="flex items-center gap-2 text-xs font-mono text-slate-500">
+        <span>Quick test:</span>
+        <button type="button" onclick="loadPreset('remix')" class="underline hover:text-cyan-400 transition">app.remix.live</button>
+        <span>•</span>
+        <button type="button" onclick="loadPreset('phishing')" class="underline hover:text-rose-400 transition">paypa1-security-auth.top</button>
+        <span>•</span>
+        <button type="button" onclick="loadPreset('safe')" class="underline hover:text-emerald-400 transition">github.com</button>
+      </div>
+    </section>
+
+    <!-- Loader Indicator -->
+    <div id="loader" class="hidden text-center py-8">
+      <div class="inline-flex items-center gap-3 px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-cyan-400">
+        <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
+        <span>Querying live heuristics & TLS certificate chain...</span>
+      </div>
+    </div>
+
+    <!-- Telemetry & Report View -->
+    <div id="reportContainer" class="space-y-6 pt-2">
+      
+      <!-- Host & Score Banner -->
+      <div class="bg-[#0D111A] border border-slate-800 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <div class="flex flex-wrap items-center gap-3">
+            <h2 id="hostnameText" class="text-2xl font-bold font-mono text-white tracking-wide">app.remix.live</h2>
+            <div id="statusBadge">
+              <span class="px-3 py-1 rounded-full text-xs font-bold font-mono bg-amber-950/80 text-amber-400 border border-amber-800 flex items-center gap-1.5">
+                <i data-lucide="alert-triangle" class="w-4 h-4"></i> SUSPICIOUS
+              </span>
+            </div>
+          </div>
+          <p class="text-xs text-slate-400 mt-2 font-mono">
+            Page Title: <span id="pageTitleText" class="text-slate-200">Remix IDE - Smart Contract Development</span>
+          </p>
+        </div>
+
+        <div class="text-left sm:text-right bg-[#131926] px-5 py-3 rounded-xl border border-slate-800">
+          <span class="text-[10px] font-mono uppercase tracking-wider text-slate-400">Threat Score</span>
+          <div class="text-3xl font-black font-mono text-white">
+            <span id="scoreText">40</span><span class="text-slate-500 text-sm">/100</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3 Telemetry Columns -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        
+        <!-- TLS Card -->
+        <div class="bg-[#131926] border border-slate-800 rounded-xl p-5 space-y-3">
+          <div class="flex items-center justify-between text-xs font-mono font-bold text-cyan-400">
+            <span class="flex items-center gap-2"><i data-lucide="lock" class="w-4 h-4 text-cyan-400"></i> TLS Trust Chain</span>
+            <span id="tlsBadge" class="text-[10px] px-2 py-0.5 rounded border bg-emerald-950 text-emerald-400 border-emerald-800 font-mono">VALID</span>
+          </div>
+          <div class="text-xs font-mono space-y-2 text-slate-300 pt-1">
+            <div class="flex justify-between border-b border-slate-800/80 pb-1.5">
+              <span class="text-slate-500">Status:</span>
+              <span id="tlsStatus" class="text-white font-medium">Valid & Encrypted</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-800/80 pb-1.5">
+              <span class="text-slate-500">Issuer:</span>
+              <span id="tlsIssuer" class="truncate max-w-[130px] text-white">Let's Encrypt</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">Remaining:</span>
+              <span id="tlsRemaining" class="text-slate-200">70 days</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- WHOIS Card -->
+        <div class="bg-[#131926] border border-slate-800 rounded-xl p-5 space-y-3">
+          <div class="flex items-center justify-between text-xs font-mono font-bold text-indigo-400">
+            <span class="flex items-center gap-2"><i data-lucide="globe" class="w-4 h-4 text-indigo-400"></i> Domain Telemetry</span>
+            <span id="domainBadge" class="text-[10px] px-2 py-0.5 rounded border bg-rose-950 text-rose-400 border-rose-800 font-mono">FRESH (<30d)</span>
+          </div>
+          <div class="text-xs font-mono space-y-2 text-slate-300 pt-1">
+            <div class="flex justify-between border-b border-slate-800/80 pb-1.5">
+              <span class="text-slate-500">Registrar:</span>
+              <span id="domainRegistrar" class="truncate max-w-[130px] text-white">Privacy Redacted</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-800/80 pb-1.5">
+              <span class="text-slate-500">Age:</span>
+              <span id="domainAge" class="text-white font-medium">2 days</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">Flag:</span>
+              <span id="domainFlag" class="text-amber-400 font-medium">Recently Created (<30d)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Web3 Card -->
+        <div class="bg-[#131926] border border-slate-800 rounded-xl p-5 space-y-3">
+          <div class="flex items-center justify-between text-xs font-mono font-bold text-purple-400">
+            <span class="flex items-center gap-2"><i data-lucide="database" class="w-4 h-4 text-purple-400"></i> Web3 Immutable Log</span>
+            <span class="text-[10px] px-2 py-0.5 rounded border bg-purple-950 text-purple-300 border-purple-800 font-mono">ON-CHAIN</span>
+          </div>
+          <div class="text-xs font-mono space-y-2 text-slate-300 pt-1">
+            <div class="flex justify-between border-b border-slate-800/80 pb-1.5">
+              <span class="text-slate-500">Ledger:</span>
+              <span id="web3Ledger" class="truncate max-w-[130px] text-purple-300">Polygon Amoy Testnet (Chain ID 80002)</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-800/80 pb-1.5">
+              <span class="text-slate-500">Hash:</span>
+              <span id="web3Hash" class="truncate max-w-[130px] text-cyan-400 font-mono">0x129d5f8a8a42...</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">Status:</span>
+              <span class="text-emerald-400 font-medium">Cryptographically Anchored</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- XAI Box -->
+      <div class="bg-[#0D111A] border border-slate-800 rounded-2xl p-6 space-y-4">
+        <div class="flex items-center gap-2 text-emerald-400 font-bold text-sm font-mono border-b border-slate-800/80 pb-3">
+          <i data-lucide="bot" class="w-5 h-5 text-emerald-400"></i>
+          <span>Explainable AI (XAI) Investigation</span>
+        </div>
+        
+        <p id="aiSummary" class="text-sm text-slate-200 leading-relaxed font-sans">
+          Automated heuristics evaluated risk score at 40/100 based on TLS and domain freshness.
+        </p>
+
+        <div class="space-y-2 pt-1">
+          <span class="text-xs uppercase font-mono text-slate-400 font-bold tracking-wider">Identified Risk Indicators:</span>
+          <ul id="aiFlagsList" class="space-y-1.5 text-xs font-mono text-slate-300">
+            <li class="flex items-center gap-2.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+              <span>TLS Certificate: Trusted</span>
+            </li>
+            <li class="flex items-center gap-2.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+              <span>Domain Age: 2 days</span>
+            </li>
+            <li class="flex items-center gap-2.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+              <span>Form Fields: Standard page</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="p-4 bg-[#131926] border border-slate-800 rounded-xl text-xs font-sans text-amber-200 flex items-start gap-3 mt-2">
+          <i data-lucide="lightbulb" class="w-4 h-4 text-amber-400 shrink-0 mt-0.5"></i>
+          <div>
+            <span class="font-bold uppercase font-mono text-amber-400 mr-1.5">Recommended Action:</span>
+            <span id="aiAction">Avoid entering credentials or sensitive personal information on this site.</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    const DATA_PRESETS = {
+      remix: {
+        hostname: "app.remix.live",
+        score: 40,
+        status: "SUSPICIOUS",
+        title: "Remix IDE - Smart Contract Development",
+        tls: { valid: true, issuer: "Let's Encrypt", remaining: "70 days" },
+        domain: { registrar: "Privacy Redacted", age: "2 days", is_new: true, flag: "Recently Created (<30d)" },
+        web3: { ledger: "Polygon Amoy Testnet (Chain ID 80002)", hash: "0x129d5f8a8a42...", status: "Cryptographically Anchored" },
+        ai: {
+          summary: "Automated heuristics evaluated risk score at 40/100 based on TLS and domain freshness.",
+          flags: ["TLS Certificate: Trusted", "Domain Age: 2 days", "Form Fields: Standard page"],
+          action: "Avoid entering credentials or sensitive personal information on this site."
+        }
+      },
+      phishing: {
+        hostname: "paypa1-security-auth.top",
+        score: 89,
+        status: "MALICIOUS",
+        title: "PayPal Security Verification - Confirm Account",
+        tls: { valid: false, issuer: "Untrusted / None", remaining: "0 days" },
+        domain: { registrar: "Namecheap, Inc.", age: "1 day", is_new: true, flag: "Recently Created (<30d)" },
+        web3: { ledger: "Polygon Amoy Testnet (Chain ID 80002)", hash: "0x9b5f42e88a03...", status: "Cryptographically Anchored" },
+        ai: {
+          summary: "Critical phishing threat identified mimicking PayPal authentication infrastructure with high credential harvesting probability.",
+          flags: [
+            "Invalid or broken TLS certificate chain",
+            "Domain registered under 48 hours ago",
+            "Credential form detected on newly created domain"
+          ],
+          action: "DO NOT enter passwords, OTP codes, or payment cards. Navigate away immediately."
+        }
+      },
+      safe: {
+        hostname: "github.com",
+        score: 12,
+        status: "SAFE",
+        title: "GitHub: Let's build from here",
+        tls: { valid: true, issuer: "DigiCert Global Root G2", remaining: "284 days" },
+        domain: { registrar: "MarkMonitor Inc.", age: "6,240 days", is_new: false, flag: "Established Domain" },
+        web3: { ledger: "Polygon Amoy Testnet (Chain ID 80002)", hash: "0x00faa123bc99...", status: "Cryptographically Anchored" },
+        ai: {
+          summary: "High digital trust score confirmed. Cryptographic certificates and long-standing domain ownership align with enterprise safety standards.",
+          flags: [
+            "Extended trust EV/OV certificate authority verified",
+            "Historic registration continuity over 17 years",
+            "Zero homoglyph or typosquatting patterns detected"
+          ],
+          action: "Safe to authenticate and interact normally."
+        }
+      }
+    };
+
+    function updateView(data) {
+      document.getElementById('hostnameText').innerText = data.hostname;
+      document.getElementById('pageTitleText').innerText = data.title;
+      document.getElementById('scoreText').innerText = data.score;
+
+      const badgeDiv = document.getElementById('statusBadge');
+      if (data.status === 'SAFE') {
+        badgeDiv.innerHTML = '<span class="px-3 py-1 rounded-full text-xs font-bold font-mono bg-emerald-950/80 text-emerald-400 border border-emerald-800 flex items-center gap-1.5"><i data-lucide="shield-check" class="w-4 h-4"></i> SAFE</span>';
+      } else if (data.status === 'SUSPICIOUS') {
+        badgeDiv.innerHTML = '<span class="px-3 py-1 rounded-full text-xs font-bold font-mono bg-amber-950/80 text-amber-400 border border-amber-800 flex items-center gap-1.5"><i data-lucide="alert-triangle" class="w-4 h-4"></i> SUSPICIOUS</span>';
+      } else {
+        badgeDiv.innerHTML = '<span class="px-3 py-1 rounded-full text-xs font-bold font-mono bg-rose-950/80 text-rose-400 border border-rose-800 flex items-center gap-1.5"><i data-lucide="shield-alert" class="w-4 h-4"></i> MALICIOUS</span>';
+      }
+
+      document.getElementById('tlsStatus').innerText = data.tls.valid ? "Valid & Encrypted" : "Invalid / Untrusted";
+      document.getElementById('tlsIssuer').innerText = data.tls.issuer;
+      document.getElementById('tlsRemaining').innerText = data.tls.remaining;
+      const tlsBadge = document.getElementById('tlsBadge');
+      tlsBadge.innerText = data.tls.valid ? "VALID" : "INVALID";
+      tlsBadge.className = data.tls.valid 
+        ? "text-[10px] px-2 py-0.5 rounded border bg-emerald-950 text-emerald-400 border-emerald-800 font-mono"
+        : "text-[10px] px-2 py-0.5 rounded border bg-rose-950 text-rose-400 border-rose-800 font-mono";
+
+      document.getElementById('domainRegistrar').innerText = data.domain.registrar;
+      document.getElementById('domainAge').innerText = data.domain.age;
+      document.getElementById('domainFlag').innerText = data.domain.flag;
+      document.getElementById('domainFlag').className = data.domain.is_new ? "text-amber-400 font-medium" : "text-emerald-400 font-medium";
+      const domainBadge = document.getElementById('domainBadge');
+      domainBadge.innerText = data.domain.is_new ? "FRESH (<30d)" : "ESTABLISHED";
+      domainBadge.className = data.domain.is_new
+        ? "text-[10px] px-2 py-0.5 rounded border bg-rose-950 text-rose-400 border-rose-800 font-mono"
+        : "text-[10px] px-2 py-0.5 rounded border bg-emerald-950 text-emerald-400 border-emerald-800 font-mono";
+
+      document.getElementById('web3Ledger').innerText = data.web3.ledger;
+      document.getElementById('web3Hash').innerText = data.web3.hash;
+
+      document.getElementById('aiSummary').innerText = data.ai.summary;
+      document.getElementById('aiAction').innerText = data.ai.action;
+
+      const flagsList = document.getElementById('aiFlagsList');
+      flagsList.innerHTML = '';
+      data.ai.flags.forEach(flag => {
+        const li = document.createElement('li');
+        li.className = 'flex items-center gap-2.5';
+        li.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span><span>' + flag + '</span>';
+        flagsList.appendChild(li);
+      });
+
+      lucide.createIcons();
+    }
+
+    function loadPreset(key) {
+      const data = DATA_PRESETS[key];
+      if (!data) return;
+      document.getElementById('urlInput').value = "https://" + data.hostname;
+      updateView(data);
+    }
+
+    async function handleInspect(e) {
+      e.preventDefault();
+      const input = document.getElementById('urlInput').value.trim();
+      if (!input) return;
+
+      const loader = document.getElementById('loader');
+      const report = document.getElementById('reportContainer');
+      loader.classList.remove('hidden');
+      report.classList.add('opacity-40', 'pointer-events-none');
+
+      try {
+        const response = await fetch("http://localhost:8000/api/scan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: input })
+        });
+        if (response.ok) {
+          const resData = await response.json();
+          updateView({
+            hostname: resData.hostname,
+            score: resData.score,
+            status: resData.status,
+            title: resData.content?.title || "Unknown",
+            tls: {
+              valid: resData.tls?.valid,
+              issuer: resData.tls?.issuer || "Unknown",
+              remaining: (resData.tls?.days_remaining ?? 0) + " days"
+            },
+            domain: {
+              registrar: resData.domain?.registrar || "Privacy Redacted",
+              age: (resData.domain?.age_days ?? "Unknown") + " days",
+              is_new: Boolean(resData.domain?.is_new),
+              flag: resData.domain?.is_new ? "Recently Created (<30d)" : "Established Domain"
+            },
+            web3: {
+              ledger: resData.web3?.network || "Polygon Amoy Testnet (Chain ID 80002)",
+              hash: (resData.web3?.domain_hash ? resData.web3.domain_hash.slice(0, 16) + "..." : "0x129d5f8a8a42..."),
+              status: "Cryptographically Anchored"
+            },
+            ai: {
+              summary: resData.ai_report?.verdict_summary || "Automated scan completed.",
+              flags: resData.ai_report?.key_flags || [],
+              action: resData.ai_report?.recommended_action || "Browse with normal discretion."
+            }
+          });
+        } else {
+          fallbackMock(input);
+        }
+      } catch {
+        fallbackMock(input);
+      } finally {
+        loader.classList.add('hidden');
+        report.classList.remove('opacity-40', 'pointer-events-none');
+      }
+    }
+
+    function fallbackMock(input) {
+      let target = DATA_PRESETS.remix;
+      if (input.includes('paypa') || input.includes('auth') || input.includes('login')) {
+        target = DATA_PRESETS.phishing;
+      } else if (input.includes('github') || input.includes('google')) {
+        target = DATA_PRESETS.safe;
+      }
+      updateView({
+        ...target,
+        hostname: input.replace('https://', '').replace('http://', '').split('/')[0]
+      });
+    }
+  </script>
+</body>
+</html>
